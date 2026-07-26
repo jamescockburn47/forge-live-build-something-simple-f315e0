@@ -14,14 +14,33 @@
 
   let notes = loadNotes();
   let currentFilter = "all";
+  let saveWarned = false;
 
   // ---------- Storage ----------
+  function isValidNote(n) {
+    return (
+      n &&
+      typeof n === "object" &&
+      typeof n.text === "string" &&
+      typeof n.id === "string" &&
+      typeof n.done === "boolean"
+    );
+  }
+
   function loadNotes() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      // Validate each note's shape so a corrupted entry can't crash render.
+      return parsed.filter(isValidNote).map((n) => ({
+        id: n.id,
+        text: n.text,
+        done: n.done,
+        createdAt: typeof n.createdAt === "number" ? n.createdAt : Date.now(),
+        updatedAt: typeof n.updatedAt === "number" ? n.updatedAt : n.createdAt || Date.now(),
+      }));
     } catch (err) {
       console.warn("Could not load notes:", err);
       return [];
@@ -33,6 +52,19 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
     } catch (err) {
       console.warn("Could not save notes:", err);
+      // Surface quota errors so the user knows edits aren't being persisted.
+      const isQuota =
+        err &&
+        (err.name === "QuotaExceededError" ||
+          err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+          err.code === 22 ||
+          err.code === 1014);
+      if (isQuota && !saveWarned) {
+        saveWarned = true;
+        alert(
+          "Browser storage is full. Your changes are showing on screen but aren't being saved. Try deleting some notes to free up space."
+        );
+      }
     }
   }
 
@@ -51,7 +83,7 @@
   }
 
   function escapeHtml(str) {
-    return str
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -103,7 +135,7 @@
         />
         <div class="body">
           <div class="text">${escapeHtml(note.text)}</div>
-          <span class="meta">${formatDate(note.updatedAt || note.createdAt)}</span>
+          <span class="meta">${escapeHtml(formatDate(note.updatedAt || note.createdAt))}</span>
         </div>
         <button class="delete" aria-label="Delete note" title="Delete">×</button>
       `;
@@ -159,8 +191,14 @@
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     const value = input.value;
-    if (value.length > MAX_LENGTH) return;
-    addNote(value);
+    if (value.length > MAX_LENGTH) {
+      // Inform the user that over-length input is being truncated
+      // instead of silently dropping the action.
+      alert(
+        `Your note was longer than ${MAX_LENGTH} characters and has been truncated to fit.`
+      );
+    }
+    addNote(value); // addNote already slices to MAX_LENGTH
     input.value = "";
     updateCharCount();
     input.focus();
