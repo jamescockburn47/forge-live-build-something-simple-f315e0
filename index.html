@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Notes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Quick Notes</h1>
+      <p class="subtitle">A tiny place to stash your thoughts.</p>
+    </header>
+
+    <main>
+      <form id="note-form" class="note-form" autocomplete="off">
+        <textarea
+          id="note-input"
+          placeholder="Write a note and press Enter (Shift+Enter for a new line)…"
+          rows="3"
+          required
+        ></textarea>
+        <div class="form-actions">
+          <span id="char-count" class="char-count">0 / 500</span>
+          <button type="submit" class="btn primary">Add Note</button>
+        </div>
+      </form>
+
+      <section class="toolbar">
+        <div class="filters" role="tablist" aria-label="Filter notes">
+          <button class="filter-btn active" data-filter="all" role="tab">All</button>
+          <button class="filter-btn" data-filter="active" role="tab">Active</button>
+          <button class="filter-btn" data-filter="done" role="tab">Done</button>
+        </div>
+        <button id="clear-btn" class="btn ghost" title="Delete all notes">Clear All</button>
+      </section>
+
+      <ul id="notes-list" class="notes-list" aria-live="polite"></ul>
+
+      <p id="empty-state" class="empty-state" hidden>
+        No notes yet. Add one above to get started!
+      </p>
+    </main>
+
+    <footer>
+      <span>Saved locally in your browser.</span>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
